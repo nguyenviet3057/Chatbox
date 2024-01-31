@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click Event Example</title>
+  <style>
+    .example-class {
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+    <ul>
+
+        <li class="classa example-class">
+            <span>Element 1</span>
+        </li>
+        <li class="classa example-class">Element 2</li>
+        <li class="classa example-class">Element 3</li>
+    </ul>
+
+<script type="module">
+  document.addEventListener("DOMContentLoaded", function() {
+    // Get all elements with the class "example-class"
+    var elements = document.querySelectorAll('.example-class');
+
+    // Attach the click event to each element
+    elements.forEach(function(element) {
+      element.addEventListener('click', function() {
+        alert('Clicked on an element with the class "example-class"');
+        // Add your click event handling code here
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

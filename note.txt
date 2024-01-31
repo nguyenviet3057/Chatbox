@@ -1,0 +1,50 @@
+// Handle image upload
+$(document).ready(function() {
+    $('input#image').change(function() {
+        var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+        var input = this;
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                // console.log('Dữ liệu ảnh:', e.target.result);
+                // console.log('Độ dài dữ liệu:', e.target.result.length, 'byte');
+                // console.log('Ảnh được đọc thành công.');
+                // Handle upload image via API => return URL src
+                const options = {
+                    maxWidth: 1280,
+                    maxHeight: 1280,
+                    quality: 0.8,
+                    success(result) {
+                        // const compressedImage = new Image();
+                        // compressedImage.src = URL.createObjectURL(result);
+                        console.log(result);
+                        // document.body.appendChild(compressedImage);
+                        
+                        // $.ajax({
+                        //     url: "https://appbanhang.gozic.vn/api/upload",
+                        //     data: {
+                        //         thumbnail: result
+                        //     }
+                        // })
+                        e.g.: {"status":1,"url":"https:\/\/cdn.gokisoft.com\/uploads\/stores\/97\/2024\/01\/","size":null,"msg":"OK"}
+                    },
+                    error(e) {
+                        console.error(e.message);
+                    },
+                };
+
+                new ImageCompressor(input.files[0], options);
+            };
+
+            // Check image file extension
+            if (allowedExtensions.test(input.files[0].name)) {
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                alert('Chỉ chấp nhận file ảnh có đuôi .jpg, .jpeg hoặc .png');
+                $(this).val('');
+            }
+        }
+    });
+});

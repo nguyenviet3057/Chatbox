@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbox</title>
+    <!-- <link rel="stylesheet" href="assets/css/bootstrap5.3.2.min.css">
+    <script src="assets/js/jquery3.7.1.min.js"></script>
+    <script src="assets/js/bootstrap5.3.2.min.js"></script> -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
+    <link rel="stylesheet" href="assets/css/fontawesome6.5.1.min.css">
+    <script src="assets/js/jquery3.7.1.min.js"></script>
+    <script src="assets/js/fontawesome6.5.1.min.js"></script>
+    <script src="assets/js/image-compressor1.1.4.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: "Nunito", sans-serif;
+            font-size: 12px;
+        }
+
+        .chat-container {
+            width: 320px;
+            height: 360px;
+            background-color: #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid lightgray;
+        }
+
+        #chat-header {
+            top: 0px;
+            height: 32px;
+            background-color: gray;
+        }
+
+        #chat-history-container {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 32px - 32px);
+            border-top: 1px solid lightgray;
+            border-bottom: 1px solid lightgray;
+        }
+
+        #chat-history {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            width: 100%;
+            max-height: 100%;
+            padding: 0px 10px;
+            height: fit-content;
+            overflow-y: auto;
+        }
+
+        #chat-history .chat-detail {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        #chat-history .chat-user {
+            flex-direction: row-reverse;
+        }
+
+        #chat-history .chat-system {
+            flex-direction: row;
+        }
+
+        #chat-history .chat-avatar {
+            top: 0px !important;
+        }
+
+        #chat-history .chat-avatar img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+
+        #chat-history .chat-message-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-user .chat-message-list {
+            align-items: flex-end;
+        }
+
+        #chat-history .chat-message:has(> span) {
+            padding: 4px 8px;
+            margin: 0px 5px 2px 5px;
+            background-color: #f2f2f2;
+            border-radius: 8px;
+            min-height: 28px;
+            max-width: 64%;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+        }
+
+        #chat-history .chat-message span {
+            overflow-wrap: anywhere;
+        }
+
+        #chat-history .chat-message:has(> img) {
+            margin: 0px 5px 2px 5px;
+            min-height: 28px;
+            max-width: 64%;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+        }
+
+        #chat-history .chat-message img {
+            width: 100%;
+            border-radius: 8px;
+            max-height: 160px;
+            min-height: 28px;
+            object-fit: contain;
+        }
+
+        #chat-input form {
+            position: relative;
+            min-height: 32px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            padding: 2px 0px;
+        }
+
+        #chat-input textarea {
+            width: 100%;
+            min-height: fit-content;
+            max-height: 50px;
+            padding: 0px 42px 0px 16px;
+            outline: none !important;
+            border: none !important;
+            resize: none;
+            overflow-y: auto;
+        }
+
+        /* #chat-input button {
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            right: 16px;
+            background-color: transparent;
+            cursor: pointer;
+        }
+
+        #chat-input button:hover path {
+            stroke: green;
+        } */
+
+        #chat-input .chat-widget-container {
+            display: flex;
+            flex-direction: row;
+            margin: 0px 10px;
+        }
+
+        .chat-widget-container button {
+            position: relative;
+            border: none;
+            background-color: transparent;
+            margin: 0px 5px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-widget-container button input {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        input[type=file],
+        input[type=file]::-webkit-file-upload-button {
+            cursor: pointer; 
+        }
+
+        .chat-widget-container button:hover {
+            color: green;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div id="chat-header">
+            <div class="header-title"></div>
+            <div class="header-function"></div>
+        </div>
+        <div id="chat-history-container">
+            <div id="chat-history">
+                <!-- <div class='chat-detail chat-user'>
+                    <div class='chat-avatar  user-avatar'>
+                        <img src='/assets/image/user.jpg'>
+                    </div>
+                    <div class='chat-message-list'>
+                        <div class='chat-message user-message'>
+                            <img src="/assets/image/image2.png">
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+        <div id="chat-input">
+            <form>
+                <textarea id="message" placeholder="Aa" rows="1"></textarea>
+                <!-- <button type="submit" id="submit-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none">
+                        <g id="SVGRepo_iconCarrier">
+                            <path
+                                d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z"
+                                stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </g>
+                    </svg>
+                </button> -->
+                <div class="chat-widget-container">
+                    <button type="button">
+                        <i class="fa-solid fa-image"></i>
+                        <input type="file" name="image" id="image" accept=".jpg, .jpeg, .png">
+                    </button>
+                    <!-- <button type="button">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <input type="file" name="file" id="file">
+                    </button> -->
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script type="module">
+    // Import modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+    import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, connectDatabaseEmulator, ref, child, push, get, set, update, serverTimestamp, onValue, off, query, orderByChild, equalTo, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    // import { getFirestore, connectFirestoreEmulator, collection, addDoc, serverTimestamp, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7OEUgaGaipy8nWbAYXacrLNNNVEYZm_4",
+      authDomain: "chat-bot-ec322.firebaseapp.com",
+      databaseURL: "https://chat-bot-ec322-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "chat-bot-ec322",
+      storageBucket: "chat-bot-ec322.appspot.com",
+      messagingSenderId: "765269828752",
+      appId: "1:765269828752:web:c173315fcc8095e82b6415",
+      measurementId: "G-52EMCT879B"
+    };
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    var db = getDatabase(app);
+    var auth = getAuth(app);
+    // Use emulators
+    connectDatabaseEmulator(db, 'localhost', 9000);
+    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+    const user_data = {
+        uid: "U10002",
+        name: "Nguyen 2",
+        email: "a@gmail.com",
+        gender: 0,
+        avatarUrl: "/assets/image/user.jpg",
+    }
+    const avatar_list = {
+        "admin": "/assets/image/system.jpg",
+        "system": "/assets/image/system.jpg",
+        "user": "/assets/image/user.jpg",
+    }
+    
+    /*
+    *
+    *   Collections/Refs && Utils
+    *
+    */
+    // Refs
+    const ref_rooms = ref(db, "rooms");
+    const ref_messages = ref(db, "messages")
+    
+    var room_id = null;
+    var ref_room = null;
+    var start_tracking = false;
+
+    // Base query
+    const queryMessageByRoomId = (room_id) => {
+        return query(ref(db, 'messages'), orderByChild('room_id'), equalTo(room_id));
+    }
+
+    // Check user is whether exist or new
+    await get(query(ref(db, 'rooms'), orderByChild('user_id'), equalTo(user_data.uid), limitToLast(1))).then((rooms) => {
+        if (rooms.exists()) {
+            // Get existed room
+            rooms.forEach((room) => {
+                room_id = room.key;
+                ref_room = ref(db, "rooms/" + room_id);
+                console.log("Room: " + room_id);
+            });
+        } else {
+            console.log("New room");
+        }
+        }).catch((error) => {
+            console.error("Error: ", error);
+        });
+
+    /* 
+    *
+    * Document elements & functions
+    * 
+    */
+    var chat_history = document.querySelector("#chat-history");
+    var last_message_list = document.querySelector("#chat-history .chat-detail:last-child");
+    var last_message = document.querySelector("#chat-history .chat-detail:last-child .chat-message:last-child");
+    var message_input = document.querySelector("#chat-input textarea#message");
+    var default_input_height = message_input.scrollHeight;
+    scrollToLastMessage();
+
+    async function sendMessage(event) {
+        event.preventDefault();
+        if (message_input.value.trim() == '') {
+            return;
+        }
+        addMessage(message_input.value.trim());
+        message_input.value = "";
+        message_input.style.height = default_input_height;
+    }
+
+    // document.querySelector("#submit-btn").addEventListener("click", (event) => sendMessage(event, this));
+
+    function addMessage(message, message_type="text") {
+        if (room_id == null && ref_room == null) {
+            room_id = push(ref_rooms).key;
+            ref_room = ref(db, "rooms/" + room_id);
+        }
+        let new_message = push(ref_messages); 
+        let message_id = new_message.key;
+        set(new_message, {
+            "room_id": room_id ?? "",
+            "type": "user",
+            "user_id": user_data.uid,
+            "message_type": message_type,
+            "message": message,
+            "is_read": false,
+            "created_at": Date.now()
+        });
+        const update_room = {
+            "user_id": user_data.uid,
+            "user_name": user_data.name,
+            "avatar_url": user_data.avatarUrl,
+            "newest_message": message,
+            "newest_message_type": message_type,
+            "created_at": Date.now(),
+            "is_read": false,
+        };
+        set(ref_room, update_room);
+
+        // Sync message in real-time with database
+        if (!start_tracking) {
+            // Request chat with bot\
+            setTimeout(function() {
+                $.post({
+                    url: "http://localhost:8000/api/chatbot",
+                    data: {
+                        room_id: room_id
+                    },
+                    success: function(result) {
+                        console.log("Chat with bot");
+                        renderMessage("BEGIN_CHATBOT", "text", "Bot entered", "system");
+                    },
+                    error: function(error) {
+                        console.log("Bot failed to enter");
+                    }
+                })
+            }, 5000);
+
+            onValue(queryMessageByRoomId(room_id), (messages) => {
+                chat_history.innerHTML = "";
+                last_message_list = document.querySelector("#chat-history .chat-detail:last-child");
+                last_message = document.querySelector("#chat-history .chat-detail:last-child .chat-message:last-child");
+                renderOldMessages(messages);
+            }, (error) => {
+                console.log(error);
+            });
+            start_tracking = true;
+        }
+    }
+
+    function renderMessage(message_id, message_type="text", message, type="user", avatarUrl=avatar_list) {
+        // console.log(message_type);
+        let message_content = (message_type == "image") ? ("<img id='" + message_id + "' src='" + message + "'>") : ("<span id='" + message_id + "'>" + message + "</span>");
+        // console.log(message_content);
+        if (last_message_list && last_message_list.classList.contains("chat-" + type)) {
+            last_message_list.querySelector(".chat-message-list").innerHTML +=
+                "<div class='chat-message " + type + "-message'>" +
+                    message_content +
+                "</div>";
+        } else {
+            chat_history.innerHTML +=
+                "<div class='chat-detail chat-" + type + "'>" +
+                    "<div class='chat-avatar " + type + "-avatar'>" +
+                        "<img src='" + avatarUrl[type] + "'>" +
+                    "</div>" +
+                    "<div class='chat-message-list'>" +
+                        "<div class='chat-message " + type + "-message'>" +
+                            message_content +
+                        "</div>" +
+                    "</div>" +
+                "</div>";
+        }
+        last_message_list = document.querySelector("#chat-history .chat-detail:last-child");
+        last_message = document.querySelector("#chat-history .chat-detail:last-child .chat-message:last-child");
+    }
+
+    // Re-render old messages
+    function renderOldMessages(messages) {
+        if (messages.exists()) {
+            messages.forEach((message) => {
+                switch (message.val().type) {
+                    case "admin":
+                        renderMessage(message.key, message.val().message_type, message.val().message, "system");
+                        break;
+                    case "system":
+                        renderMessage(message.key, message.val().message_type, message.val().message, "system");
+                        break;
+                    case "user":
+                        renderMessage(message.key, message.val().message_type, message.val().message, "user");
+                        break;
+                }
+            });
+            let loadedImages = 0;
+            $("#chat-history img").on('load', function() {
+                loadedImages++;
+                // Check if all images are loaded because of using link src
+                if (loadedImages === $("#chat-history img").length) {
+                    scrollToLastMessage();
+                }
+            });
+        } else {
+            console.log("No message");
+        }
+    }
+
+    //Handle file input
+    $(document).ready(function() {
+        $('input#image').change(function() {
+            var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+            var input = this;
+
+            if (input.files && input.files[0]) {
+                console.log(input.files[0])
+                // Check image file extension
+                if (allowedExtensions.test(input.files[0].name)) {
+
+                    // Compress image
+                    const options = {
+                        strict: true,
+                        maxWidth: 1920,
+                        maxHeight: 1920,
+                        quality: 0.8,
+                        mimeType: 'image/jpeg',
+                        success(result) {
+                            console.log(result);
+                            var reader = new FileReader();
+                            reader.onloadend = function(e) {
+                                // uploadFile(new File([result], result.name, { type: result.type }), (url) => {
+                                //     addMessage(url, "image");
+                                // });
+                                addMessage("/assets/image/image7" + ".jpg", "image");
+                            };
+                            reader.readAsDataURL(result);
+                        },
+                        error(e) {
+                            console.error(e.message);
+                        },
+                    };
+
+                    new ImageCompressor(input.files[0], options);
+                } else {
+                    alert('Chỉ chấp nhận file ảnh có đuôi .jpg, .jpeg hoặc .png');
+                    $(this).val('');
+                }
+
+                
+            }
+        });
+    });
+
+    // Pre-processing
+    function scrollToLastMessage() {
+        if (last_message) document.querySelector("#chat-history .chat-detail:last-child .chat-message:last-child").scrollIntoView({ behavior: "auto" });
+    }
+
+    message_input.oninput = function() {
+        message_input.style.height = default_input_height + "px";
+        message_input.style.height = (message_input.scrollHeight) + "px";
+    };
+
+    message_input.onkeypress = function(event) {
+        if(event.which === 13 && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage(event);
+        }
+    };
+
+    async function uploadFile(file, callback) {
+        // if (file != null) {
+        //     if (!file.name.match(/.(jpg|jpeg|png|gif|bmp|webp)$/i))
+        //         return alert('HĂ¬nh áº£nh báº¡n táº£i lĂªn khĂ´ng Ä‘Ăºng Ä‘á»‹nh dáº¡ng file, vui lĂ²ng kiá»ƒm tra láº¡i (jpg, jpeg, png, bmp, gif)');
+        // }
+        // if (file.size > (30 * 1024 * 1024)) { 
+        //     return alert('Dung lÆ°á»£ng file áº£nh quĂ¡ lá»›n -> YĂªu cáº§u file dung lÆ°á»£ng <= 30M') 
+        // }
+        var url = '//gozic.vn/api/upload'
+        var xhr = new XMLHttpRequest(); 
+        var fd = new FormData(); 
+        xhr.open('POST', url, true); 
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); 
+        xhr.onreadystatechange = function (e) {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                var obj = JSON.parse(xhr.responseText)
+                console.log(obj);
+                if (obj.status == 0) {
+                    alert(obj.msg)
+                    return
+                }
+                callback(obj.url)
+            }
+        }; 
+        fd.append('tags', 'browser_upload'); 
+        if (file != null) { 
+            fd.append('file', file); 
+        }
+        fd.append('isWaterMask', false); 
+        fd.append('watermask', ""); 
+        fd.append('idCat', 0); 
+        fd.append('color', ""); 
+        fd.append('enabled', 1); 
+        xhr.send(fd);
+    }
+</script>
+</html>
