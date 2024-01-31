@@ -223,9 +223,12 @@
 
         .chat-message-list div.reply-note {
             display: flex;
-            flex-direction: column;
+            /* flex-direction: column; */
             margin-right: 5px;
             margin-top: 3px;
+        }
+        .chat-message-list div.reply-note.images-message {
+            max-width: 100px; /* .chat-message-list div.reply-note img -> max-width = 50px; */
         }
         .chat-user .chat-message-list div.reply-note {
             margin-right: 5px;
@@ -250,9 +253,10 @@
         .chat-message-list div.reply-note img {
             height: 50px;
             width: fit-content;
-            max-width: 50px;
+            /* max-width: 50px; */
             border-radius: 3px;
             opacity: 0.6;
+            object-fit: contain;
         }
 
         .chat-user .chat-message-list > div.w-100 {
@@ -261,7 +265,7 @@
             align-items: flex-end;
         }
 
-        #chat-history .chat-message:has(> div:first-child) {
+        #chat-history .chat-message:has(> div:first-child:not(:has(> img))) {
             position: relative;
             padding: 4px 8px;
             margin: 0px 5px 2px 5px;
@@ -274,6 +278,12 @@
             display: flex;
             align-items: center;
         }
+
+        /* #chat-history .chat-message {
+            position: relative;
+            display: flex;
+            align-items: center;
+        } */
 
         #chat-history .chat-message div {
             overflow-wrap: anywhere;
@@ -304,17 +314,49 @@
         #chat-history .chat-message:has(> img:first-child) {
             position: relative;
             margin: 0px 5px 2px 5px;
+            /* background-color: #f2f2f2; */
+            background-color: #f7e3b4;
+            border-radius: 8px;
             min-height: 28px;
             max-width: 64%;
             width: fit-content;
             display: flex;
             align-items: center;
         }
+        #chat-history .chat-message:has(> img:first-child) img {
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #chat-history .chat-message:has(> div.images-message:first-child) {
+            position: relative;
+            margin: 0px 5px 2px 5px;
+            min-height: 28px;
+            max-width: 64%;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .user-message div.images-message {
+            justify-content: flex-end;
+        }
+
+        #chat-history .chat-message div.images-message > div {
+            border-radius: 8px;
+            border: 1px solid #f7e3b4;
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        #chat-history .chat-message div.images-message > div:hover {
+            background-color: #f6f6f6;
+        }
 
         #chat-history .chat-message img {
             width: 100%;
-            border-radius: 8px;
-            max-height: 160px;
+            max-height: 80px;
             min-height: 28px;
             object-fit: contain;
         }
@@ -389,7 +431,7 @@
             cursor: pointer;
             width: fit-content;
         }
-        .chat-message-list > div.w-100 .message-reply {
+        .chat-system .chat-message-list > div.w-100 .message-reply {
             right: -20px;
         }
         .chat-user .chat-message-list > div.w-100 .message-reply {
@@ -425,16 +467,20 @@
             border-left: 1px solid #f9bd43;
             padding: 0px 10px;
         }
-        #chat-reply-container #reply-image {
+        #chat-reply-container #reply-images {
             height: 100%;
             width: auto;
             max-width: 80px;
-            object-fit: contain;
             margin-right: 10px;
             display: none;
+            overflow: hidden;
+            border-radius: 3px;
+            border: 1px solid #f7e3b4;
+            cursor: pointer;
+            background-color: white;
         }
-        #chat-reply-container #reply-image.d-show {
-            display: block;
+        #chat-reply-container #reply-images.d-show {
+            display: flex;
         }
         #chat-reply-container #reply-detail {
             display: flex;
@@ -495,7 +541,8 @@
                 </div>
                 <div id="chat-reply">
                     <div id="chat-reply-container">
-                        <img src="" id="reply-image" class="">
+                        <div id="reply-images" class="row images-message">
+                        </div>
                         <div id="reply-detail">
                             <span id="reply-name" class="fw-bold"></span>
                             <span id="reply-content"></span>
@@ -623,7 +670,7 @@
 
     // Add new message
     function addMessage(message, message_type = "text") {
-        console.log(message)
+        console.log(message, reply)
         const col_chat = collection(fs, "chat_rooms_gozic", room_id, "chat");
         const doc_chat_data = {
             "askimg": "",
@@ -849,7 +896,18 @@
         let message_content = "";
         switch (message.type) {
             case "image":
-                message_content = "<img src='" + message.content + "'>";
+                if (message.content.length == 1) {
+                    message_content = "<img src='" + message.content[0] + "'>";
+                } else {
+                    message_content = "<div class='row w-100 m-0 images-message'>";
+                    message.content.forEach((img_src, index) => {
+                        message_content +=
+                        "<div class='col-6 p-1 d-flex align-items-center justify-content-center'>" +
+                            "<img src='" + img_src + "' class='img-fluid'>" +
+                        "</div>";
+                    });
+                    message_content += "</div>";
+                }
                 break;
             case "markdown":
                 message_content = "<div>" + md.render(message.content) + "</div>";
@@ -862,7 +920,16 @@
         let reply_content = "";
         if (is_reply) {
             if (reply.type == "text") reply_content = "<div class='reply-note'><span>" + shortenStringDisplay(reply.message, 30) + "</span></div>";
-            else reply_content = "<div class='reply-note'><img src='" + reply.images[0] +"'></div>";
+            else {
+                reply_content = "<div class='reply-note row w-100 images-message'>";
+                reply.images.forEach((img_src, index) => {
+                    reply_content +=
+                    "<div class='col-6 p-1 d-flex align-items-center justify-content-center'>" +
+                        "<img src='" + img_src + "' class='img-fluid'>" +
+                    "</div>";
+                })
+                reply_content += "</div>";
+            }
         }
         // console.log(message_content);
         if (last_message_list && last_message_list.classList.contains("chat-" + message.role)) {
@@ -951,94 +1018,62 @@
     }
 
     //Handle file input
-    let image_list = [];
-    let arrayOfImages = [];
-    const options = {
-        strict: true,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        quality: 0.8,
-        mimeType: 'image/jpeg'
-    };
-    const compressImage = async (image, options) => {
-        return new Promise((resolve, reject) => {
-            const compressor = new ImageCompressor();
-            
-            const successCallback = async (result) => {
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    try {
-                        await uploadFile(new File([result], result.name, { type: result.type }), (url) => {
-                            if (reply.check == 4) {
-                                reply.check = 3;
-                                reply.images.push(url ?? "");
-                            }
-                            image_list.push(url);
-                            console.log(image_list, url)
-                            console.log("after add image, not done upload")
-                        });
-                        console.log("after add image, done upload")
-                        resolve(result);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                reader.readAsDataURL(result);
-            };
-
-            const errorCallback = (error) => {
-                console.error("Lỗi khi nén ảnh:", error);
-                reject(error);
-            };
-
-            compressor.compress(image, {
-                ...options,
-                success: successCallback,
-                error: errorCallback
-            });
-        });
-    };
-    const compressImages = async (arrayOfImages, options) => {
-        const compressedImages = [];
-        try {
-            for (const image of arrayOfImages) {
-                // const compressedImage = await compressImage(image, options);
-                compressImage(image, options).then(compressedImage => {
-                    compressedImages.push(compressedImage);
-                    console.log(compressedImages)
-                    console.log("list: " + image_list)
-                    console.log("finish add all images")
-                });
-            }
-            console.log("Tất cả ảnh đã được nén!");
-            return compressedImages;
-        } catch (error) {
-            console.error("Lỗi khi nén ảnh:", error);
-            throw error;
-        }
-    };
     $(document).ready(function () {
         $('input#image').change(async function () {
             var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
             var input = this;
 
             if (input.files && input.files[0]) {
+                const options = {
+                    strict: true,
+                    maxWidth: 1920,
+                    maxHeight: 1920,
+                    quality: 0.8,
+                    mimeType: 'image/jpeg',
+                    success(result) {
+                        // console.log(result);
+                    },
+                    error(e) {
+                        console.error(e.message);
+                    },
+                };
+                let promises = [];
+                const compressor = new ImageCompressor();
+
                 // console.log(input.files)
 
                 Array.from(input.files).map((file, index) => {
                     // Check image file extension
                     if (allowedExtensions.test(file.name)) {
                         // console.log(file)
-                        arrayOfImages.push(file);
+                        promises.push(compressor.compress(file, options));
                     } else {
                         alert('Chỉ chấp nhận file ảnh có đuôi .jpg, .jpeg hoặc .png');
                         $(this).val(null);
+                        return;
                     }
                 })
+
+                // Compress images
+                const compressedImages = await Promise.all(promises);
+                console.log(compressedImages)
+
+                // Upload compressed images
+                let image_list = [];
+                if (reply.check == 4) {
+                    reply.check = 3;
+                }
+                for (const result of compressedImages) {
+                    try {
+                        const url = await uploadFile(new File([result], result.name, { type: result.type })); // Wait for each request to complete
+                        image_list.push(url); // Push the response data to the result array
+                    } catch (error) {
+                        console.log("Upload images failed: " + error); // Log any errors that occur during requests
+                    }
+                }
+                // console.log(image_list)
+                addMessage(image_list, "image");
             }
-            const compressedImages = await compressImages(arrayOfImages, options);
-            console.log(image_list);
-            // addMessage(image_list, "image");
             $(this).val(null);
         });
     });
@@ -1062,43 +1097,45 @@
         };
     });
 
-    async function uploadFile(file, callback) {
-        // if (file != null) {
-        //     if (!file.name.match(/.(jpg|jpeg|png|gif|bmp|webp)$/i))
-        //         return alert('HĂ¬nh áº£nh báº¡n táº£i lĂªn khĂ´ng Ä‘Ăºng Ä‘á»‹nh dáº¡ng file, vui lĂ²ng kiá»ƒm tra láº¡i (jpg, jpeg, png, bmp, gif)');
-        // }
-        // if (file.size > (30 * 1024 * 1024)) { 
-        //     return alert('Dung lÆ°á»£ng file áº£nh quĂ¡ lá»›n -> YĂªu cáº§u file dung lÆ°á»£ng <= 30M') 
-        // }
-        // var url = '//gozic.vn/api/upload'
-        var url = '//appbanhang.gozic.vn/api/upload'
-        var url = '//localhost:8000/api/upload'
-        var xhr = new XMLHttpRequest();
-        var fd = new FormData();
-        xhr.open('POST', url, true);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.onreadystatechange = function (e) {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                var obj = JSON.parse(xhr.responseText)
-                // console.log(obj);
-                if (obj.status == 0) {
-                    alert(obj.msg)
-                    return
+    function uploadFile(file) {
+        return new Promise((resolve, reject) => {
+            // if (file != null) {
+            //     if (!file.name.match(/.(jpg|jpeg|png|gif|bmp|webp)$/i))
+            //         return alert('HĂ¬nh áº£nh báº¡n táº£i lĂªn khĂ´ng Ä‘Ăºng Ä‘á»‹nh dáº¡ng file, vui lĂ²ng kiá»ƒm tra láº¡i (jpg, jpeg, png, bmp, gif)');
+            // }
+            // if (file.size > (30 * 1024 * 1024)) { 
+            //     return alert('Dung lÆ°á»£ng file áº£nh quĂ¡ lá»›n -> YĂªu cáº§u file dung lÆ°á»£ng <= 30M') 
+            // }
+            // var url = '//gozic.vn/api/upload'
+            var url = '//appbanhang.gozic.vn/api/upload'
+            var url = '//localhost:8000/api/upload'
+            var xhr = new XMLHttpRequest();
+            var fd = new FormData();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function (e) {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var obj = JSON.parse(xhr.responseText)
+                    // console.log(obj);
+                    if (obj.status == 0) {
+                        alert(obj.msg)
+                        return
+                    }
+                    // callback(obj.url)
+                    resolve(obj.url);
                 }
-                callback(obj.url)
+            };
+            fd.append('tags', 'browser_upload');
+            if (file != null) {
+                fd.append('file', file);
             }
-        };
-        fd.append('tags', 'browser_upload');
-        if (file != null) {
-            fd.append('file', file);
-        }
-        fd.append('isWaterMask', false);
-        fd.append('watermask', "");
-        fd.append('idCat', 0);
-        fd.append('color', "");
-        fd.append('enabled', 1);
-        xhr.send(fd);
-        console.log("before add image")
+            fd.append('isWaterMask', false);
+            fd.append('watermask', "");
+            fd.append('idCat', 0);
+            fd.append('color', "");
+            fd.append('enabled', 1);
+            xhr.send(fd);
+        });
     }
 
     // Handle reply message
@@ -1110,18 +1147,28 @@
             case "image":
                 reply.check = 4;
                 reply.reply = "";
-                reply.images = [
-                    $(this).parent(".chat-message").children("img").eq(0).prop("src")
-                ];
+                reply.images = $(this).parent(".chat-message").find("img").map(function() {
+                    return $(this).prop("src");
+                }).get();
                 $("#reply-detail #reply-content").text("[Hình ảnh]");
-                $("#reply-image").addClass('d-show').prop("src", $(this).parent(".chat-message").children("img").eq(0).prop("src"));
+                // console.log($(this).parent(".chat-message").find("img").map(function() {
+                //     return $(this).prop("src");
+                // }))
+                let reply_images = "";
+                reply.images.forEach((img_src, index) => {
+                    reply_images += 
+                    "<div class='col-6 p-1 d-flex align-items-center justify-content-center'>" +
+                        "<img src='" + img_src + "' class='img-fluid'>" +
+                    "</div>";
+                })
+                $("#reply-images").html(reply_images).addClass('d-show');
                 break;
             case "text":
                 reply.check = 2;
                 reply.reply = $(this).parent(".chat-message").children("span").eq(0).text();
                 reply.images = [];
                 $("#reply-detail #reply-content").text(shortenStringDisplay(reply.reply, 30));
-                $("#reply-image").removeClass('d-show');
+                $("#reply-images").removeClass('d-show');
                 $("#chat-history").removeClass('with-reply');
                 break;
         }
@@ -1132,7 +1179,7 @@
         reply.id = "";
         reply.reply = "";
         reply.check = 1;
-        $("#reply-image").removeClass('d-show');
+        $("#reply-images").removeClass('d-show');
         $("#chat-history").removeClass('with-reply');
         $("#chat-reply").removeClass('d-flex');
     }
@@ -1336,6 +1383,27 @@
             }
         });
     });
+
+    // Handle click image
+    $(document).on('click', '.chat-message img', function() {
+        console.log($(this), $(this).prop("src"))
+        $("body").append(popupImage($(this).prop("src")));
+    })
+    function popupImage(img_src) {
+        return "<div id='popup-image' style='position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(225, 225, 225, 0.6);'>" +
+            "<div class='container-fluid h-100 p-5 d-flex align-items-center justify-content-center'>" +
+                "<img src='" + img_src + "' style='max-width: 100%; max-height: 100%;'>" +
+            "</div>" +
+            "<div style='position: absolute; top: 2rem; right: 2rem'>" +
+                "<div>" +
+                    "<button id='close-popup-image' style='width: 36px; height: 36px; border: 1px solid lightgray; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center;'><i class='fas fa-times' style='font-size: x-large;'></i></button>" +
+                "</div>" +
+            "</div>" +
+        "</div>";
+    }
+    $(document).on('click', 'button#close-popup-image', function() {
+        $("div#popup-image").remove();
+    })
 </script>
 
 </html>
