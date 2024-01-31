@@ -623,6 +623,7 @@
 
     // Add new message
     function addMessage(message, message_type = "text") {
+        console.log(message)
         const col_chat = collection(fs, "chat_rooms_gozic", room_id, "chat");
         const doc_chat_data = {
             "askimg": "",
@@ -645,7 +646,7 @@
         addDoc(col_chat, doc_chat_data);
 
         const update_room = {
-            "lastchat": message,
+            "lastchat": message_type == "text" ? message : "đã gửi ảnh",
             "lastid": user_data.id,
             "participants": [
                 user_data.id,
@@ -844,7 +845,7 @@
     }
 
     function renderMessage(message, is_reply=false, reply, avatar_url = avatar_list) {
-        console.log(is_reply, reply);
+        console.log(is_reply, reply, message);
         let message_content = "";
         switch (message.type) {
             case "image":
@@ -909,7 +910,7 @@
             };
             if (message.data().images.length > 0) {
                 message_data.type = "image";
-                message_data.content = message.data().images[0];
+                message_data.content = message.data().images;
             }
 
             let is_reply = message.data().check != 1 ?? false;
@@ -950,53 +951,95 @@
     }
 
     //Handle file input
+    let image_list = [];
+    let arrayOfImages = [];
+    const options = {
+        strict: true,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        quality: 0.8,
+        mimeType: 'image/jpeg'
+    };
+    const compressImage = async (image, options) => {
+        return new Promise((resolve, reject) => {
+            const compressor = new ImageCompressor();
+            
+            const successCallback = async (result) => {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        await uploadFile(new File([result], result.name, { type: result.type }), (url) => {
+                            if (reply.check == 4) {
+                                reply.check = 3;
+                                reply.images.push(url ?? "");
+                            }
+                            image_list.push(url);
+                            console.log(image_list, url)
+                            console.log("after add image, not done upload")
+                        });
+                        console.log("after add image, done upload")
+                        resolve(result);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsDataURL(result);
+            };
+
+            const errorCallback = (error) => {
+                console.error("Lỗi khi nén ảnh:", error);
+                reject(error);
+            };
+
+            compressor.compress(image, {
+                ...options,
+                success: successCallback,
+                error: errorCallback
+            });
+        });
+    };
+    const compressImages = async (arrayOfImages, options) => {
+        const compressedImages = [];
+        try {
+            for (const image of arrayOfImages) {
+                // const compressedImage = await compressImage(image, options);
+                compressImage(image, options).then(compressedImage => {
+                    compressedImages.push(compressedImage);
+                    console.log(compressedImages)
+                    console.log("list: " + image_list)
+                    console.log("finish add all images")
+                });
+            }
+            console.log("Tất cả ảnh đã được nén!");
+            return compressedImages;
+        } catch (error) {
+            console.error("Lỗi khi nén ảnh:", error);
+            throw error;
+        }
+    };
     $(document).ready(function () {
-        $('input#image').change(function () {
+        $('input#image').change(async function () {
             var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
             var input = this;
 
             if (input.files && input.files[0]) {
-                let image_list = [];
-                input.files.forEach((file, index) => {
-                    console.log(file)
+                // console.log(input.files)
+
+                Array.from(input.files).map((file, index) => {
                     // Check image file extension
                     if (allowedExtensions.test(file.name)) {
-
-                        // Compress image
-                        const options = {
-                            strict: true,
-                            maxWidth: 1920,
-                            maxHeight: 1920,
-                            quality: 0.8,
-                            mimeType: 'image/jpeg',
-                            success(result) {
-                                console.log(result);
-                                var reader = new FileReader();
-                                reader.onloadend = function (e) {
-                                    uploadFile(new File([result], result.name, { type: result.type }), (url) => {
-                                        if (reply.check == 4) {
-                                            reply.check = 3;
-                                            reply.images.push(url ?? "");
-                                        }
-                                        image_list.push(url);
-                                    });
-                                    // addMessage("assets/image/image7" + ".jpg", "image");
-                                };
-                                reader.readAsDataURL(result);
-                            },
-                            error(e) {
-                                console.error(e.message);
-                            },
-                        };
-
-                        new ImageCompressor(file, options);
+                        // console.log(file)
+                        arrayOfImages.push(file);
                     } else {
                         alert('Chỉ chấp nhận file ảnh có đuôi .jpg, .jpeg hoặc .png');
-                        $(this).val('');
+                        $(this).val(null);
                     }
                 })
-                addMessage(image_list, "image");
             }
+            const compressedImages = await compressImages(arrayOfImages, options);
+            console.log(image_list);
+            // addMessage(image_list, "image");
+            $(this).val(null);
         });
     });
 
@@ -1029,7 +1072,7 @@
         // }
         // var url = '//gozic.vn/api/upload'
         var url = '//appbanhang.gozic.vn/api/upload'
-        var url = 'localhost:8000/api/upload'
+        var url = '//localhost:8000/api/upload'
         var xhr = new XMLHttpRequest();
         var fd = new FormData();
         xhr.open('POST', url, true);
@@ -1037,7 +1080,7 @@
         xhr.onreadystatechange = function (e) {
             if (xhr.readyState == 4 && xhr.status == 200) {
                 var obj = JSON.parse(xhr.responseText)
-                console.log(obj);
+                // console.log(obj);
                 if (obj.status == 0) {
                     alert(obj.msg)
                     return
@@ -1055,6 +1098,7 @@
         fd.append('color', "");
         fd.append('enabled', 1);
         xhr.send(fd);
+        console.log("before add image")
     }
 
     // Handle reply message
