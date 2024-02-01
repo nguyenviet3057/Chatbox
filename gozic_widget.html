@@ -224,13 +224,13 @@
         .chat-message-list div.reply-note {
             display: flex;
             /* flex-direction: column; */
-            margin-right: 5px;
             margin-top: 3px;
         }
         .chat-message-list div.reply-note.images-message {
             max-width: 100px; /* .chat-message-list div.reply-note img -> max-width = 50px; */
         }
         .chat-user .chat-message-list div.reply-note {
+            justify-content: flex-end;
             margin-right: 5px;
         }
         .chat-system .chat-message-list div.reply-note {
@@ -246,9 +246,6 @@
             opacity: 0.6;
             border-radius: 5px;
             padding: 1px 3px;
-        }
-        .chat-user .chat-message-list div.reply-note {
-            align-items: flex-end;
         }
         .chat-message-list div.reply-note img {
             height: 50px;
@@ -356,7 +353,7 @@
 
         #chat-history .chat-message img {
             width: 100%;
-            max-height: 80px;
+            max-height: 160px;
             min-height: 28px;
             object-fit: contain;
         }
@@ -610,7 +607,15 @@
     // connectDatabaseEmulator(db, 'localhost', 9000);
     // connectAuthEmulator(auth, "http://127.0.0.1:9099");
     // connectFirestoreEmulator(fs, '127.0.0.1', 8082);
-    const BASE_URL = "http://localhost:8000";
+    
+    // Server APIs config
+    const BASE_URL = "https://appbanhang.gozic.vn";
+    const API_CREATE_CHAT = "/module/chat-firebase/create-chat";
+    const API_CHAT_BOT = "/module/chat-firebase/bot";
+    // const BASE_URL = "http://localhost:8000";
+    // const API_CREATE_CHAT = "/api/chat/new";
+    // const API_CHAT_BOT = "/api/chat/bot";
+
     let welcome_message = "Chào mừng bạn đến với Gozic. Hãy để lại câu hỏi để chúng tôi có thể giải đáp giúp bạn!"
     let user_data = {};
     // user_data = {
@@ -647,10 +652,18 @@
     var col_room = null;
     var doc_room = null;
     var started_bot = false;
+    const CHECK_TYPE = {
+        CHAT_TEXT: 1,
+        CHAT_IMAGES: 2,
+        CHAT_PRODUCT: 3,
+        REPLY_CHAT_TEXT: 4,
+        REPLY_CHAT_IMAGES: 5,
+        REPLY_CHAT_PRODUCT: 6,
+    }
 
     var reply = {
         id: "",
-        check: 1,
+        check: CHECK_TYPE.CHAT_TEXT,
         reply: "",
         name: "",
         images: []
@@ -703,9 +716,9 @@
             "receiverId": system_data.id,
             "receiverName": system_data.name,
             "receiverRoleId": 1,
+            "senderAvatar": user_data.avatar_url,
             "senderId": user_data.id,
             "senderName": user_data.name,
-            "senderPhone": user_data.phone,
             "senderRoleId": 10,
             "timestamp": new Date(),
             "unread": 1,
@@ -715,13 +728,13 @@
 
         resetReply();
 
-        if (started_bot && system_data.id == 0) {
+        if (started_bot && system_data.id == 0 && false) {
             let data = {
                 message: message,
                 thread_id: thread_id
             };
             $.post({
-                url: BASE_URL + "/api/chat/bot",
+                url: BASE_URL + API_CHAT_BOT,
                 data: JSON.stringify(data),
                 dataType : "json",
                 contentType: "application/json; charset=utf-8",
@@ -761,7 +774,7 @@
                     thread_id: thread_id
                 };
                 $.post({
-                    url: BASE_URL + "/api/chat/bot",
+                    url: BASE_URL + API_CHAT_BOT,
                     data: JSON.stringify(data),
                     dataType : "json",
                     contentType: "application/json; charset=utf-8",
@@ -980,14 +993,13 @@
                 message_data.content = message.data().images;
             }
 
-            let is_reply = message.data().check != 1 ?? false;
+            let is_reply = [CHECK_TYPE.REPLY_CHAT_TEXT, CHECK_TYPE.REPLY_CHAT_IMAGES, CHECK_TYPE.REPLY_CHAT_PRODUCT].includes(message.data().check) ?? false;
             let reply_data = {
                 type: "text",
                 message: message.data().reply,
                 images: []
             }
-            if ([3, 4].includes(message.data().check)) {
-                console.log()
+            if ([CHECK_TYPE.REPLY_CHAT_IMAGES].includes(message.data().check)) {
                 reply_data.type = "image";
                 reply_data.message = "";
                 reply_data.images = message.data().replyimages;
@@ -1060,8 +1072,8 @@
 
                 // Upload compressed images
                 let image_list = [];
-                if (reply.check == 4) {
-                    reply.check = 3;
+                if (!([CHECK_TYPE.REPLY_CHAT_TEXT, CHECK_TYPE.REPLY_CHAT_IMAGES, CHECK_TYPE.REPLY_CHAT_PRODUCT].includes(reply.check))) {
+                    reply.check = CHECK_TYPE.CHAT_IMAGES;
                 }
                 for (const result of compressedImages) {
                     try {
@@ -1075,6 +1087,7 @@
                 addMessage(image_list, "image");
             }
             $(this).val(null);
+            resetReply();
         });
     });
 
@@ -1108,7 +1121,7 @@
             // }
             // var url = '//gozic.vn/api/upload'
             var url = '//appbanhang.gozic.vn/api/upload'
-            var url = '//localhost:8000/api/upload'
+            // var url = '//localhost:8000/api/upload'
             var xhr = new XMLHttpRequest();
             var fd = new FormData();
             xhr.open('POST', url, true);
@@ -1145,7 +1158,7 @@
         $("#reply-detail #reply-name").text(shortenStringDisplay(reply.name, 18));
         switch ($(this).data("message-type")) {
             case "image":
-                reply.check = 4;
+                reply.check = CHECK_TYPE.REPLY_CHAT_IMAGES;
                 reply.reply = "";
                 reply.images = $(this).parent(".chat-message").find("img").map(function() {
                     return $(this).prop("src");
@@ -1164,7 +1177,7 @@
                 $("#reply-images").html(reply_images).addClass('d-show');
                 break;
             case "text":
-                reply.check = 2;
+                reply.check = CHECK_TYPE.REPLY_CHAT_TEXT;
                 reply.reply = $(this).parent(".chat-message").children("span").eq(0).text();
                 reply.images = [];
                 $("#reply-detail #reply-content").text(shortenStringDisplay(reply.reply, 30));
@@ -1178,7 +1191,9 @@
     function resetReply() {
         reply.id = "";
         reply.reply = "";
-        reply.check = 1;
+        reply.check = CHECK_TYPE.CHAT_TEXT;
+        reply.images = [];
+        reply.name = "";
         $("#reply-images").removeClass('d-show');
         $("#chat-history").removeClass('with-reply');
         $("#chat-reply").removeClass('d-flex');
@@ -1283,7 +1298,7 @@
                         "gender": $("#customer-info select[name='gender']").val()
                     };
                 $.post({
-                    url: BASE_URL + "/api/chat/new",
+                    url: BASE_URL + API_CREATE_CHAT,
                     data: JSON.stringify(data),
                     dataType : "json",
                     contentType: "application/json; charset=utf-8",
