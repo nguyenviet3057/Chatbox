@@ -59,7 +59,7 @@
             overflow: hidden;
             box-shadow: 0px 0px 4px lightgray;
 
-            /* scale: 0; */
+            scale: 0;
             transform-origin: right bottom;
             animation-fill-mode: forwards;
         }
@@ -497,7 +497,7 @@
 <body>
     <div class="container-fluid root p-1">
         <div id="popup-iframe-gozic" role="button">
-            <img src="/assets/image/icon-gozic.png" alt="gozic">
+            <img src="https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg" alt="gozic">
         </div>
         <div class="chat-container">
             <div id="customer-info">
@@ -526,9 +526,9 @@
                     Chat
                 </div>
                 <div class="header-function">
-                    <button class="border border-0 bg-transparent me-3">
+                    <!-- <button class="border border-0 bg-transparent me-3">
                         <i class="fas fa-minus-circle" style="font-size: xx-large;"></i>
-                    </button>
+                    </button> -->
                     <button class="border border-0 bg-transparent" id="close-chat-btn">
                         <i class="fas fa-chevron-circle-down" style="font-size: xx-large;"></i>
                     </button>
@@ -578,16 +578,6 @@
     import { getFirestore, connectFirestoreEmulator, collection, orderBy, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, serverTimestamp, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Initialize Firebase
-    // const firebaseConfig = {
-    //     apiKey: "AIzaSyB7OEUgaGaipy8nWbAYXacrLNNNVEYZm_4",
-    //     authDomain: "chat-bot-ec322.firebaseapp.com",
-    //     databaseURL: "https://chat-bot-ec322-default-rtdb.asia-southeast1.firebasedatabase.app",
-    //     projectId: "chat-bot-ec322",
-    //     storageBucket: "chat-bot-ec322.appspot.com",
-    //     messagingSenderId: "765269828752",
-    //     appId: "1:765269828752:web:c173315fcc8095e82b6415",
-    //     measurementId: "G-52EMCT879B"
-    // };
     const firebaseConfig = {
         apiKey: "AIzaSyDw2S01aViwowyyJ-A0m7pVTX8OIZF2VJU",
         authDomain: "ziczacapp.firebaseapp.com",
@@ -603,38 +593,28 @@
     // var db = getDatabase(app);
     var auth = getAuth(app);
     var fs = getFirestore(app);
-    // Use emulators
-    $(document).ready(() => $(".firebase-emulator-warning").remove());
-    // connectDatabaseEmulator(db, 'localhost', 9000);
-    // connectAuthEmulator(auth, "http://127.0.0.1:9099");
-    // connectFirestoreEmulator(fs, '127.0.0.1', 8082);
     
     // Server APIs config
     const BASE_URL = "https://appbanhang.gozic.vn";
-    const API_CREATE_CHAT = "/module/chat-firebase/create-chat";
-    const API_CHAT_BOT = "/module/chat-firebase/bot";
-    // const BASE_URL = "http://localhost:8000";
-    // const API_CREATE_CHAT = "/api/chat/new";
-    // const API_CHAT_BOT = "/api/chat/bot";
+    // const API_CREATE_CHAT = "/module/chat-firebase/create-chat";
+    const API_PING = "/api/ping"; // Get server config
+    const API_CHAT_BOT = "/module/chat-firebase/bot"; // Not in-use yet
+    const USER_AVATAR_URL = "https://appbanhang.gozic.vn/uploads/stores/97/2024/01/download-removebg-preview.png";
 
     let welcome_message = "Chào mừng bạn đến với Gozic. Hãy để lại câu hỏi để chúng tôi có thể giải đáp giúp bạn!"
     let user_data = {};
-    // user_data = {
-    //     id: "U10003",
-    //     name: "Nguyen 3",
-    //     email: "a@gmail.com",
-    //     gender: 0,
-    //     avatar_url: "/assets/image/user.jpg",
-    // }
     let system_data = {};
-    // const avatar_list = {
-    //     "admin": "/assets/image/system.jpg",
-    //     "system": "/assets/image/icon-gozic.png",
-    //     "user": user_data ? user_data.avatar_url : "",
-    // }
     let avatar_list = {
-        "admin": "/assets/image/icon-gozic.png",
-        "system": "/assets/image/icon-gozic.png"
+        "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+        "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+    }
+    
+    user_data = JSON.parse(localStorage.getItem("user_data"));
+    system_data = JSON.parse(localStorage.getItem("system_data"));
+    if (user_data && Date.now() - new Date(user_data.created_at).getTime() > 2*365*24*3600*1000) {
+        console.log("time out")
+        user_data = null;
+        system_data = null;
     }
 
     /*
@@ -674,13 +654,10 @@
     const docRoomByRoomId = (room_id) => {
         return doc(col_rooms, room_id);
     }
-    // room_id = '000000_' + user_data.id
-    // console.log(docRoomByRoomId(room_id));
     const colMessageByRoomId = (room_id) => {
         let doc_room = docRoomByRoomId(room_id);
         return collection(doc_room, 'chat');
     }
-    // console.log(colMessageByRoomId(room_id))
 
     // Add new message
     function addMessage(message, message_type = "text") {
@@ -823,7 +800,6 @@
 
     // Check user is whether exist or new
     async function checkUser() {
-        // if (doc_room == null) return;
         avatar_list['user'] = user_data.avatar_url;
         getDocs(query(col_rooms, where("participants", "array-contains", user_data.id))).then((rooms) => {
             rooms.forEach(room => {
@@ -859,14 +835,6 @@
             });
         })
     }
-    
-    user_data = JSON.parse(localStorage.getItem("user_data"));
-    system_data = JSON.parse(localStorage.getItem("system_data"));
-    if (user_data && Date.now() - new Date(user_data.created_at).getTime() > 12*24*3600*1000) {
-        console.log("time out")
-        user_data = null;
-        system_data = null;
-    }
     if (user_data != null) checkUser();
 
     /* 
@@ -881,15 +849,11 @@
     var default_input_height = message_input.offsetHeight;
     
     var md = window.markdownit();
-    // Remember the old renderer if overridden, or proxy to the default renderer.
     var defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
         return self.renderToken(tokens, idx, options);
     };
     md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-        // Add a new `target` attribute, or replace the value of the existing one.
         tokens[idx].attrSet('target', '_blank');
-
-        // Pass the token to the default renderer.
         return defaultRender(tokens, idx, options, env, self);
     };
 
@@ -1079,9 +1043,9 @@
                 for (const result of compressedImages) {
                     try {
                         const url = await uploadFile(new File([result], result.name, { type: result.type })); // Wait for each request to complete
-                        image_list.push(url); // Push the response data to the result array
+                        image_list.push(url); // Push the response image link to the result array
                     } catch (error) {
-                        console.log("Upload images failed: " + error); // Log any errors that occur during requests
+                        console.log("Upload images failed: " + error);
                     }
                 }
                 // console.log(image_list)
@@ -1111,47 +1075,6 @@
         };
     });
 
-    function uploadFile(file) {
-        return new Promise((resolve, reject) => {
-            // if (file != null) {
-            //     if (!file.name.match(/.(jpg|jpeg|png|gif|bmp|webp)$/i))
-            //         return alert('HĂ¬nh áº£nh báº¡n táº£i lĂªn khĂ´ng Ä‘Ăºng Ä‘á»‹nh dáº¡ng file, vui lĂ²ng kiá»ƒm tra láº¡i (jpg, jpeg, png, bmp, gif)');
-            // }
-            // if (file.size > (30 * 1024 * 1024)) { 
-            //     return alert('Dung lÆ°á»£ng file áº£nh quĂ¡ lá»›n -> YĂªu cáº§u file dung lÆ°á»£ng <= 30M') 
-            // }
-            // var url = '//gozic.vn/api/upload'
-            var url = '//appbanhang.gozic.vn/api/upload'
-            // var url = '//localhost:8000/api/upload'
-            var xhr = new XMLHttpRequest();
-            var fd = new FormData();
-            xhr.open('POST', url, true);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.onreadystatechange = function (e) {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var obj = JSON.parse(xhr.responseText)
-                    // console.log(obj);
-                    if (obj.status == 0) {
-                        alert(obj.msg)
-                        return
-                    }
-                    // callback(obj.url)
-                    resolve(obj.url);
-                }
-            };
-            fd.append('tags', 'browser_upload');
-            if (file != null) {
-                fd.append('file', file);
-            }
-            fd.append('isWaterMask', false);
-            fd.append('watermask', "");
-            fd.append('idCat', 0);
-            fd.append('color', "");
-            fd.append('enabled', 1);
-            xhr.send(fd);
-        });
-    }
-
     // Handle reply message
     $(document).on('click', ".message-reply", function() {
         reply.id = $(this).prop("id");
@@ -1165,9 +1088,6 @@
                     return $(this).prop("src");
                 }).get();
                 $("#reply-detail #reply-content").text("[Hình ảnh]");
-                // console.log($(this).parent(".chat-message").find("img").map(function() {
-                //     return $(this).prop("src");
-                // }))
                 let reply_images = "";
                 reply.images.forEach((img_src, index) => {
                     reply_images += 
@@ -1293,104 +1213,88 @@
 
             if (is_valid) {
                 $(this).prop("disabled", true);
-                let data = {
-                        "name": $("#customer-info input[name='name']").val(),
-                        "phone": $("#customer-info input[name='phone']").val(),
-                        "gender": $("#customer-info select[name='gender']").val()
-                    };
-                $.post({
-                    url: BASE_URL + API_CREATE_CHAT,
-                    data: JSON.stringify(data),
-                    dataType : "json",
-                    contentType: "application/json; charset=utf-8",
+                $.get({
+                    url: BASE_URL + API_PING,
                     success: function(result) {
-                        console.log(result);
-                        let data = result.data;
-                        switch (result.status) {
-                            case 0:
-                                $("#customer-info button").text("Error").css("color", "red");
-                                break;
-                            case 1:
-                                user_data = {
-                                    id: data.customer.id,
-                                    name: data.customer.name,
-                                    phone: data.customer.phone,
-                                    gender: data.customer.gender,
-                                    avatar_url: data.customer.avatar_url,
-                                    created_at: new Date(),
-                                    token: ""
-                                }
-                                const doc_user = doc(fs, 'users_gozic', user_data.id.toString());
-                                setDoc(doc_user, {
-                                    date_time: new Date(),
-                                    id: user_data.id,
-                                    name: user_data.name,
-                                    token: user_data.token
-                                });
-
-                                system_data = {
-                                    id: data.system.id,
-                                    name: data.system.name,
-                                    phone: data.system.phone,
-                                    avatar_url: data.system.avatar_url
-                                }
-                                localStorage.setItem("user_data", JSON.stringify(user_data)); // Temporary save user data for getting old messages
-                                localStorage.setItem("system_data", JSON.stringify(system_data)); // Temporary save system data for getting old messages
-                                avatar_list = {
-                                    "admin": "/assets/image/icon-gozic.png",
-                                    "system": "/assets/image/icon-gozic.png",
-                                    "user": user_data.avatar_url,
-                                }
-                                // system_data.id = 0;
-                                thread_id = data.thread_id;
-
-                                room_id = system_data.id + "_" + user_data.id;
-                                doc_room = doc(fs, 'chat_rooms_gozic', room_id);
-                                setDoc(doc_room, {
-                                    "lastchat": welcome_message,
-                                    "lastid": system_data.id,
-                                    "participants": [
-                                        user_data.id,
-                                        system_data.id
-                                    ],
-                                    "receiverAvatar": user_data.avatar_url,
-                                    "receiverId": user_data.id,
-                                    "receiverName": user_data.name,
-                                    "receiverRoleId": 1,
-                                    "senderAvatar": system_data.avatar_url,
-                                    "senderId": system_data.id,
-                                    "senderName": system_data.name,
-                                    "senderRoleId": 10,
-                                    "timestamp": new Date(),
-                                    "unread": 1,
-                                    "threadId": ""
-                                }).then(() => {
-                                    col_room = collection(doc_room, "chat")
-                                    addDoc(col_room, {
-                                        "askimg": "",
-                                        "chat": welcome_message,
-                                        "check": 1,
-                                        "id": "",
-                                        "images": [],
-                                        "price": 0,
-                                        "receiverId": user_data.id,
-                                        "receiverName": user_data.name,
-                                        "receiverToken": "",
-                                        "reply": "",
-                                        "replyimages": [],
-                                        "senderId": system_data.id,
-                                        "senderName": system_data.name,
-                                        "senderPhone": system_data.phone,
-                                        "timestamp": new Date(),
-                                        "title": ""
-                                    }).then(() => {
-                                        checkUser();
-                                        $("#customer-info").fadeOut();
-                                        $("textarea#message").focus();
-                                    });
-                                });
-                                break;
+                        let data = JSON.parse(result);
+                        user_data = {
+                            id: Date.now() + makeid(8),
+                            name: $("#customer-info input[name='name']").val(),
+                            phone: $("#customer-info input[name='phone']").val(),
+                            gender: $("#customer-info select[name='gender']").val(),
+                            avatar_url: USER_AVATAR_URL,
+                            created_at: new Date(),
+                            token: ""
                         }
+                        const doc_user = doc(fs, 'users_gozic', user_data.id.toString());
+                        setDoc(doc_user, {
+                            date_time: new Date(),
+                            id: user_data.id,
+                            name: user_data.name,
+                            token: user_data.token
+                        });
+
+                        system_data = {
+                            id: data.admin_id,
+                            name: data.appName,
+                            phone: data.phone_number,
+                            avatar_url: avatar_list.system
+                        }
+                        localStorage.setItem("user_data", JSON.stringify(user_data)); // Temporary save user data for getting old messages
+                        localStorage.setItem("system_data", JSON.stringify(system_data)); // Temporary save system data for getting old messages
+                        avatar_list = {
+                            "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+                            "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+                            "user": user_data.avatar_url,
+                        }
+                        // system_data.id = 0;
+                        thread_id = data.thread_id;
+
+                        room_id = system_data.id + "_" + user_data.id;
+                        doc_room = doc(fs, 'chat_rooms_gozic', room_id);
+                        setDoc(doc_room, {
+                            "lastchat": welcome_message,
+                            "lastid": system_data.id,
+                            "participants": [
+                                user_data.id,
+                                system_data.id
+                            ],
+                            "receiverAvatar": user_data.avatar_url,
+                            "receiverId": user_data.id,
+                            "receiverName": user_data.name,
+                            "receiverRoleId": 1,
+                            "senderAvatar": system_data.avatar_url,
+                            "senderId": system_data.id,
+                            "senderName": system_data.name,
+                            "senderRoleId": 10,
+                            "timestamp": new Date(),
+                            "unread": 1,
+                            "threadId": ""
+                        }).then(() => {
+                            col_room = collection(doc_room, "chat")
+                            addDoc(col_room, {
+                                "askimg": "",
+                                "chat": welcome_message,
+                                "check": 1,
+                                "id": "",
+                                "images": [],
+                                "price": 0,
+                                "receiverId": user_data.id,
+                                "receiverName": user_data.name,
+                                "receiverToken": "",
+                                "reply": "",
+                                "replyimages": [],
+                                "senderId": system_data.id,
+                                "senderName": system_data.name,
+                                "senderPhone": system_data.phone,
+                                "timestamp": new Date(),
+                                "title": ""
+                            }).then(() => {
+                                checkUser();
+                                $("#customer-info").fadeOut();
+                                $("textarea#message").focus();
+                            });
+                        })
                     },
                     error: function(error) {
                         $("#customer-info button").text("Error").css({color: "white", backgroundColor: "red"});
