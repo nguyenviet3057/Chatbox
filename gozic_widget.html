@@ -1284,7 +1284,7 @@
     });
 
     // Handle click image
-    $(document).on('click', '.images-message > div', function() {
+    $(document).on('click', '.images-message > div, .chat-message:has(> img)', function() {
         // console.log($(this), $(this).prop("src"))
         $("body").append(popupImage($(this).children("img").eq(0).prop("src")));
     })
