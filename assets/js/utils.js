@@ -97,8 +97,8 @@ function uploadFile(file) {
         // if (file.size > (30 * 1024 * 1024)) { 
         //     return alert('Dung lÆ°á»£ng file áº£nh quĂ¡ lá»›n -> YĂªu cáº§u file dung lÆ°á»£ng <= 30M') 
         // }
-        // var url = '//gozic.vn/api/upload'
-        var url = '//appbanhang.gozic.vn/api/upload'
+        var url = '//gozic.vn/api/upload'
+        // var url = '//appbanhang.gozic.vn/api/upload'
         // var url = '//localhost:8000/api/upload'
         var xhr = new XMLHttpRequest();
         var fd = new FormData();
