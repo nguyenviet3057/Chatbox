@@ -596,7 +596,10 @@
     const API_CHAT_BOT = "/module/chat-firebase/bot"; // Not in-use yet
     const USER_AVATAR_URL = "https://appbanhang.gozic.vn/uploads/stores/97/2024/01/download-removebg-preview.png";
 
-    let welcome_message = "Chào mừng bạn đến với Gozic. Hãy để lại câu hỏi để chúng tôi có thể giải đáp giúp bạn!"
+    // let welcome_message = "Chào mừng bạn đến với Gozic. Hãy để lại câu hỏi để chúng tôi có thể giải đáp giúp bạn!"
+    function firstMessage(user_data) {
+        return "Thông tin:\nTên: " + (user_data.name ?? "") + "\nSố điện thoại: " + (user_data.phone ?? "");
+    }
     let user_data = {};
     let system_data = {};
     let avatar_list = {
@@ -886,7 +889,7 @@
                 message_content = "<div>" + md.render(message.content) + "</div>";
                 break;
             default:
-                message_content = "<span>" + message.content + "</span>";
+                message_content = "<span>" + message.content.replace(/\n/g,"<br>") + "</span>";
                 break;
         }
 
@@ -1232,7 +1235,7 @@
                         room_id = system_data.id + "_" + user_data.id;
                         doc_room = doc(fs, 'chat_rooms_gozic', room_id);
                         setDoc(doc_room, {
-                            "lastchat": welcome_message,
+                            "lastchat": firstMessage(user_data),
                             "lastid": system_data.id,
                             "participants": [
                                 user_data.id,
@@ -1253,7 +1256,7 @@
                             col_room = collection(doc_room, "chat")
                             addDoc(col_room, {
                                 "askimg": "",
-                                "chat": welcome_message,
+                                "chat": firstMessage(user_data),
                                 "check": 1,
                                 "id": "",
                                 "images": [],
