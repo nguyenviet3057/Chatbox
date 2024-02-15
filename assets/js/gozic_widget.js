@@ -2,7 +2,7 @@ window.onload = function() {
     console.log("abc")
     document.querySelector("body").innerHTML += (
         "<div id='gozic-widget'>" +
-            "<iframe src='https://appbanhang.gozic.vn/module/chat-firebase/iframe' width='60' height='60' frameborder='0' allowfullscreen></iframe>" +
+            "<iframe src='https://appbanhang.gozic.vn/module/chat-firebase/iframe' data-logo='' width='60' height='60' frameborder='0' allowfullscreen></iframe>" +
         "</div>");
     document.querySelector("head").innerHTML += (
         "<style>" +

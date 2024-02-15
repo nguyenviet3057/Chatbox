@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vẽ hình vuông bằng div dựa vào chiều cao</title>
+<style>
+    .square-container {
+        height: 50vh; /* Chiều cao của hình vuông sẽ chiếm 50% chiều cao của viewport */
+        position: relative;
+    }
+    .square-content {
+        width: 100%; /* Chiều rộng của hình vuông bằng với phần tử cha */
+        height: 100%; /* Chiều cao của hình vuông bằng với phần tử cha */
+        background-color: lightblue;
+        padding-left: calc(50% - 50vh); /* Sử dụng calc để tính margin-top, giữ cho hình vuông ở giữa */
+    }
+</style>
+</head>
+<body>
+    <div class="square-container">
+        <div class="square-content">
+            <!-- Nội dung của bạn ở đây -->
+        </div>
+    </div>
+</body>
+</html>

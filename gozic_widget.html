@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -263,8 +262,14 @@
             align-items: flex-end;
         }
 
-        #chat-history .chat-message:has(> div:first-child:not(:has(> img))) {
+        #chat-history .chat-message {
             position: relative;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+        }
+
+        #chat-history .chat-message:has(> div:first-child:not(:has(> img))) {
             padding: 4px 8px;
             margin: 0px 5px 2px 5px;
             /* background-color: #f2f2f2; */
@@ -272,9 +277,6 @@
             border-radius: 8px;
             min-height: 28px;
             max-width: 64%;
-            width: fit-content;
-            display: flex;
-            align-items: center;
         }
 
         /* #chat-history .chat-message {
@@ -292,7 +294,6 @@
         }
 
         #chat-history .chat-message:has(> span:first-child) {
-            position: relative;
             padding: 4px 8px;
             margin: 0px 5px 2px 5px;
             /* background-color: #f2f2f2; */
@@ -300,9 +301,6 @@
             border-radius: 8px;
             min-height: 28px;
             max-width: 64%;
-            width: fit-content;
-            display: flex;
-            align-items: center;
         }
 
         #chat-history .chat-message span {
@@ -310,16 +308,12 @@
         }
 
         #chat-history .chat-message:has(> img:first-child) {
-            position: relative;
             margin: 0px 5px 2px 5px;
             /* background-color: #f2f2f2; */
             background-color: #f7e3b4;
             border-radius: 8px;
             min-height: 28px;
             max-width: 64%;
-            width: fit-content;
-            display: flex;
-            align-items: center;
         }
         #chat-history .chat-message:has(> img:first-child) img {
             border-radius: 8px;
@@ -327,14 +321,19 @@
         }
 
         #chat-history .chat-message:has(> div.images-message:first-child) {
-            position: relative;
             margin: 0px 5px 2px 5px;
             min-height: 28px;
             max-width: 64%;
-            width: fit-content;
-            display: flex;
-            align-items: center;
             justify-content: flex-end;
+        }
+
+        #chat-history .chat-message:has(> div.chat-markdown:first-child) {
+            margin: 0px 5px 2px 5px;
+            padding: 4px 8px;
+            background-color: #f7e3b4;
+            border-radius: 8px;
+            min-height: 28px;
+            max-width: 64%;
         }
 
         .user-message div.images-message {
@@ -493,18 +492,17 @@
         }
     </style>
 </head>
-
 <body>
     <div class="container-fluid root p-1">
         <div id="popup-iframe-gozic" role="button">
-            <img src="https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg" alt="gozic">
+            <img src="" alt="">
         </div>
         <div class="chat-container">
             <div id="customer-info">
                 <div class="container-fluid m-0 p-0 w-100 d-flex justify-content-center">
                     <div>
                         <div class="d-flex flex-column form-info px-2">
-                            <span class="h3 mt-4 text-center fw-bold" id="welcome-title">Welcome to Gozic</span>
+                            <span class="h3 mt-4 text-center fw-bold" id="welcome-title"></span>
                             <span class="h6 mb-2 mt-2">Please fill your information</span>
                             <input type="text" name="name" id="name" class="form-control mb-3 p-3" placeholder="Enter your name" maxlength="50">
                             <input type="tel" name="phone" id="phone" class="form-control mb-3 p-3" placeholder="Enter your phone number" minlength="10" maxlength="10">
@@ -564,6 +562,24 @@
         </div>
     </div>
 </body>
+<script>
+    var avatar_list = {
+        "admin": "",
+        "system": "",
+        "user": ""
+    };
+    window.addEventListener('message', function(event) {
+        console.log(event.data)
+        $("#message-title").text(event.data.welcome_title);
+        $("#popup-iframe-gozic img").prop("src", event.data.logo);
+        $("#popup-iframe-gozic img").on('load', function() {
+            document.body.style.opacity = 1;
+        });
+        avatar_list.admin = event.data.avatar_admin;
+        avatar_list.system = event.data.avatar_system;
+        avatar_list.user = event.data.avatar_user;
+    }, true);
+</script>
 <script type="module">
     // Import modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -594,7 +610,7 @@
     // const API_CREATE_CHAT = "/module/chat-firebase/create-chat";
     const API_PING = "/api/ping"; // Get server config
     const API_CHAT_BOT = "/module/chat-firebase/bot"; // Not in-use yet
-    const USER_AVATAR_URL = "https://appbanhang.gozic.vn/uploads/stores/97/2024/01/download-removebg-preview.png";
+    // const USER_AVATAR_URL = "https://appbanhang.gozic.vn/uploads/stores/97/2024/01/download-removebg-preview.png";
 
     // let welcome_message = "Chào mừng bạn đến với Gozic. Hãy để lại câu hỏi để chúng tôi có thể giải đáp giúp bạn!"
     function firstMessage(user_data) {
@@ -602,10 +618,10 @@
     }
     let user_data = {};
     let system_data = {};
-    let avatar_list = {
-        "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
-        "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
-    }
+    // let avatar_list = {
+    //     "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+    //     "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+    // }
     
     user_data = JSON.parse(localStorage.getItem("user_data"));
     system_data = JSON.parse(localStorage.getItem("system_data"));
@@ -630,7 +646,7 @@
     var thread_id = null;
     var col_room = null;
     var doc_room = null;
-    var started_bot = false;
+    var bot_ready = true;
     const CHECK_TYPE = {
         CHAT_TEXT: 1,
         CHAT_IMAGES: 2,
@@ -638,6 +654,7 @@
         REPLY_CHAT_TEXT: 4,
         REPLY_CHAT_IMAGES: 5,
         REPLY_CHAT_PRODUCT: 6,
+        CHAT_BOT: 7
     }
 
     var reply = {
@@ -659,7 +676,7 @@
 
     // Add new message
     function addMessage(message, message_type = "text") {
-        console.log(message, reply)
+        // console.log(message, reply)
         const col_chat = collection(fs, "chat_rooms_gozic", room_id, "chat");
         const doc_chat_data = {
             "askimg": "",
@@ -698,50 +715,177 @@
             "senderRoleId": 10,
             "timestamp": new Date(),
             "unread": 1,
-            "threadId": ""
         };
         updateDoc(docRoomByRoomId(room_id), update_room);
 
+        // Send Cloud Messaging Notification to mobile device
+        let data = {
+            "notification": {
+                "title": system_data.name, 
+                "body": message_type == "text" ? message : "đã gửi ảnh"
+            },
+            "priority": "high", 
+            "data": {
+                "click_action":"test",
+                "id": "1",
+                "status": "done",
+                "message" : message_type == "text" ? message : "đã gửi ảnh"
+            },
+            "to": system_data.token ?? ""
+        };
+        $.post({
+            url: "https://fcm.googleapis.com/fcm/send",
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                Authorization: "key=AAAA9XMRnyQ:APA91bEoAtbVA7Uq47FtyQa71SpBMdVhfWT3sKeVODNH9izm4yI8pQJ3oTdDSf_FGC4rVcaXEJjZFzfTyC6izycPetPZlx0HSghNgJ5zbzN9XWYkLVe_zMEfj28l52eeWE4Z_LmFpIJ-",
+            },
+            dataType: 'json',
+            data: JSON.stringify(data)
+        })
+
         resetReply();
 
-        if (started_bot && system_data.id == 0 && false) {
+        if (thread_id && bot_ready) {
+            bot_ready = false;
+
             let data = {
                 message: message,
                 thread_id: thread_id
             };
+            const headers = {
+                'Authorization': 'Bearer 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',
+                'Content-Type': 'application/json; charset=utf-8',
+                'OpenAI-Beta': 'assistants=v1',
+            };
+            
+            // Add message to thread
             $.post({
-                url: BASE_URL + API_CHAT_BOT,
-                data: JSON.stringify(data),
-                dataType : "json",
-                contentType: "application/json; charset=utf-8",
+                url: "https://api.openai.com/v1/threads/" + thread_id + "/messages",
+                headers: headers,
+                dataType: 'json',
+                data: JSON.stringify({
+                    "role": "user",
+                    "content": message
+                }),
                 success: function (result) {
-                    switch (result.status) {
-                        case 0:
-                            console.log("Admin has already taken care");
-                            break;
-                        case 1:
-                            console.log("Bot response");
-                            let data= result.data;
-                            set(push(ref_messages), {
-                                "room_id": room_id ?? "",
-                                "type": "system",
-                                "user_id": user_data.id,
-                                "message_type": "markdown",
-                                "message": data.latest_message,
-                                "is_read": false,
-                                "created_at": new Date()
-                            });
-                            break;
-                    }
+                    // Create run
+                    $.post({
+                        url: "https://api.openai.com/v1/threads/" + thread_id + "/runs",
+                        headers: headers,
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            "assistant_id": "asst_Mv2gBBTSeQmHG1mcPWS11bwm"
+                        }),
+                        success: function(result) {
+                            // Retrieve run
+                            let retrieve_run = null;
+                            let run_status = result.status;
+                            let begin_time = Date.now();
+                            let current_retrieve_time = 0;
+                            let retrieve_times = 16;
+                            retrieve_run = setInterval(function() {
+                                $.get({
+                                    url: "https://api.openai.com/v1/threads/" + thread_id + "/runs/" + result.id,
+                                    headers: headers,
+                                    dataType: 'json',
+                                    data: {
+                                        "assistant_id": "asst_Mv2gBBTSeQmHG1mcPWS11bwm"
+                                    },
+                                    success: function(result) {
+                                        run_status = result.status;
+                                    },
+                                    error: function (error) {
+                                        console.log("Bot failed to chat: 1+");
+                                        return;
+                                    }
+                                })
+                            
+                                if (run_status == 'failed' || run_status == 'expired' || run_status == 'cancelled') {
+                                    console.log("Bot failed to chat: 1++");
+                                    return;
+                                }
+
+                                current_retrieve_time += 1;
+                                if (current_retrieve_time >= retrieve_times || run_status == 'completed') {
+                                    clearInterval(retrieve_run);
+                                    // Get message list
+                                    $.get({
+                                        url: "https://api.openai.com/v1/threads/" + thread_id + "/messages?limit=5&order=desc",
+                                        headers: headers,
+                                        success: function(result) {
+                                            // console.log(result);
+                                            // console.log(result.data[0].content[0].text.value);
+                                            const col_chat = collection(fs, "chat_rooms_gozic", room_id, "chat");
+                                            const doc_chat_data = {
+                                                "askimg": "",
+                                                "chat": result.data[0].content[0].text.value ?? "",
+                                                "check": CHECK_TYPE.CHAT_BOT,
+                                                "id": "",
+                                                "images": [],
+                                                "price": 0,
+                                                "receiverId": user_data.id,
+                                                "receiverName": user_data.name,
+                                                "receiverToken": "",
+                                                "reply": "",
+                                                "replyimages": [],
+                                                "senderId": system_data.id,
+                                                "senderName": system_data.name,
+                                                "senderPhone": system_data.phone,
+                                                "timestamp": new Date(),
+                                                "title": ""
+                                            }
+                                            addDoc(col_chat, doc_chat_data);
+
+                                            const update_room = {
+                                                "lastchat": result.data[0].content[0].text.value ?? "",
+                                                "lastid": system_data.id,
+                                                "participants": [
+                                                    user_data.id,
+                                                    system_data.id
+                                                ],
+                                                "receiverAvatar": user_data.avatar_url,
+                                                "receiverId": user_data.id,
+                                                "receiverName": user_data.name,
+                                                "receiverRoleId": 1,
+                                                "senderAvatar": system_data.avatar_url,
+                                                "senderId": system_data.id,
+                                                "senderName": system_data.name,
+                                                "senderRoleId": 10,
+                                                "timestamp": new Date(),
+                                                "unread": 0,
+                                            };
+                                            updateDoc(docRoomByRoomId(room_id), update_room);
+                                            bot_ready = true;
+                                        },
+                                        error: function(error) {
+                                            console.log("Bot failed to chat: 3");
+                                            bot_ready = true;
+                                        }
+                                    })
+                                }
+
+                                if (current_retrieve_time >= retrieve_times && run_status != 'completed') {
+                                    console.log("Bot failed to chat: 2");
+                                    clearInterval(retrieve_run)
+                                    bot_ready = true;
+                                }
+                            }, 5000);
+                        },
+                        error: function (error) {
+                            console.log("Bot failed to chat: 1");
+                            bot_ready = true;
+                        }
+                    })
                 },
                 error: function (error) {
-                    console.log("Bot failed to chat");
+                    console.log("Bot failed to chat: 0");
+                    bot_ready = true;
                 }
             });
         }
 
         // Sync message in real-time with database and make request with bot if no admin takes care
-        if (!started_bot && false) {
+        if (!bot_ready && false) {
             console.log("Start tracking");
             // Request chat with bot
             setTimeout(function () {
@@ -791,7 +935,7 @@
                 }, (error) => {
                     console.log(error);
                 });
-                started_bot = true;
+                bot_ready = true;
             }, 10000);
         }
     }
@@ -808,6 +952,7 @@
                 if (doc_room_data.exists()) {    
                     system_data.id = doc_room_data.data().participants[1];
                     thread_id = doc_room_data.data().threadId;
+                    // console.log("Retrive thread: " + thread_id);
 
                     onSnapshot(query(colMessageByRoomId(room_id), orderBy("timestamp")), (snapshot) => {
                         // console.log("Retrieve: " + room_id);
@@ -823,8 +968,29 @@
 
                     onSnapshot(query(docRoomByRoomId(room_id)), (room) => {
                         if (room.exists()) {
-                            console.log("Changed from system " + system_data.id + " to " + room.data().participants[1] ?? "null");
-                            system_data.id = room.data().participants[1] ?? null;
+                            // console.log("Changed from system " + system_data.id + " to " + room.data().participants[1] ?? "null");
+                            // system_data.id = room.data().participants[1] ?? null;
+                            system_data.id = room.data().participants[1];
+                            let doc_admin = doc(fs, 'users_gozic', system_data.id);
+                            getDoc(doc_admin).then((doc_admin_data) => {
+                                if (doc_admin_data.exists()) {
+                                    system_data.token = doc_admin_data.data().token;
+                                    // console.log(system_data.token);
+                                }
+                            })
+
+                            console.log("Changed from thread " + (thread_id ? thread_id : "null") + " to " + ((room.data().threadId && room.data().threadId != "") ? room.data().threadId : "null"));
+                            
+                            if (room.data().threadId && room.data().threadId != "") {
+                                thread_id = room.data().threadId;
+                            } else {
+                                thread_id = null;
+                            }
+                            if (thread_id && thread_id != "") {
+                                $(".header-title").text("Chat (bạn đang chat với trợ lý ảo)");
+                            } else if (thread_id == null) {
+                                $(".header-title").text("Chat");
+                            }
                         }
                     })
 
@@ -886,7 +1052,7 @@
                 }
                 break;
             case "markdown":
-                message_content = "<div>" + md.render(message.content) + "</div>";
+                message_content = "<div class='chat-markdown'>" + md.render(message.content) + "</div>";
                 break;
             default:
                 message_content = "<span>" + message.content.replace(/\n/g,"<br>") + "</span>";
@@ -954,6 +1120,9 @@
             if (message.data().images.length > 0) {
                 message_data.type = "image";
                 message_data.content = message.data().images;
+            }
+            if (message.data().check == CHECK_TYPE.CHAT_BOT) {
+                message_data.type = "markdown";
             }
 
             let is_reply = [CHECK_TYPE.REPLY_CHAT_TEXT, CHECK_TYPE.REPLY_CHAT_IMAGES, CHECK_TYPE.REPLY_CHAT_PRODUCT].includes(message.data().check) ?? false;
@@ -1204,7 +1373,7 @@
                             id: Date.now() + makeid(8),
                             name: $("#customer-info input[name='name']").val(),
                             phone: $("#customer-info input[name='phone']").val(),
-                            avatar_url: USER_AVATAR_URL,
+                            avatar_url: avatar_list.user,
                             created_at: new Date(),
                             token: ""
                         }
@@ -1225,12 +1394,12 @@
                         localStorage.setItem("user_data", JSON.stringify(user_data)); // Temporary save user data for getting old messages
                         localStorage.setItem("system_data", JSON.stringify(system_data)); // Temporary save system data for getting old messages
                         avatar_list = {
-                            "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
-                            "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+                            "admin": avatar_list.admin,
+                            "system": avatar_list.system,
                             "user": user_data.avatar_url,
                         }
                         // system_data.id = 0;
-                        thread_id = data.thread_id;
+                        // thread_id = data.thread_id;
 
                         room_id = system_data.id + "_" + user_data.id;
                         doc_room = doc(fs, 'chat_rooms_gozic', room_id);
