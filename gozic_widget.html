@@ -37,6 +37,37 @@
             right: 0;
             padding: inherit;
         }
+        #popup-iframe-gozic.alert-new-message::before {
+            content: '!';
+            width: 16px;
+            height: 16px;
+            background-color: red;
+            color: white;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            right: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            animation: shake 0.5s infinite alternate;
+        }
+
+        @keyframes shake {
+            0% {
+                scale: 1.1;
+                transform: rotate(-8deg);
+            }
+            50% {
+                scale: 1;
+                transform: rotate(0deg);
+            }
+            100% {
+                scale: 1.1;
+                transform: rotate(8deg);
+            }
+        }
 
         #popup-iframe-gozic img {
             width: 50px;
@@ -580,6 +611,16 @@
         avatar_list.user = event.data.avatar_user;
     }, true);
 </script>
+<script>
+    if (window.Notification && Notification.permission === 'default') {
+        console.log('default')
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+            }
+        });
+    }
+</script>
 <script type="module">
     // Import modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -587,6 +628,7 @@
     import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     // import { getDatabase, connectDatabaseEmulator, ref, child, push, get, set, update, serverTimestamp, onValue, off, query, orderByChild, equalTo, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getFirestore, connectFirestoreEmulator, collection, orderBy, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, serverTimestamp, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
     // Initialize Firebase
     const firebaseConfig = {
@@ -604,6 +646,8 @@
     // var db = getDatabase(app);
     var auth = getAuth(app);
     var fs = getFirestore(app);
+    // connectFirestoreEmulator(fs, '127.0.0.1', 8082);
+    var messaging = getMessaging(app);
     
     // Server APIs config
     const BASE_URL = "https://appbanhang.gozic.vn";
@@ -617,18 +661,24 @@
         return "Thông tin:\nTên: " + (user_data.name ?? "") + "\nSố điện thoại: " + (user_data.phone ?? "");
     }
     let user_data = {};
-    let system_data = {};
+    let system_data = {
+        id: "000097",
+        name: "App Bán Hàng",
+        phone: "0987654321",
+        avatar_url: "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
+        vapid: "BOdrLVZfmC0wgJc8PNMXS3ZY66jqpaU1KVee4Y1YNg5h8aEEHjbwcY4LqOPzzUc2h387XUsjsViaZfQuGpWWz9I"
+    };
     // let avatar_list = {
     //     "admin": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
     //     "system": "https://cdn.gokisoft.com/uploads/stores/97/2024/01/583143640.jpg",
     // }
     
     user_data = JSON.parse(localStorage.getItem("user_data"));
-    system_data = JSON.parse(localStorage.getItem("system_data"));
+    // system_data = JSON.parse(localStorage.getItem("system_data"));
     if (user_data && Date.now() - new Date(user_data.created_at).getTime() > 2*365*24*3600*1000) {
         console.log("time out")
         user_data = null;
-        system_data = null;
+        // system_data = null;
     }
 
     /*
@@ -647,6 +697,8 @@
     var col_room = null;
     var doc_room = null;
     var bot_ready = true;
+    var showChat = false;
+    var lastid = null;
     const CHECK_TYPE = {
         CHAT_TEXT: 1,
         CHAT_IMAGES: 2,
@@ -753,7 +805,7 @@
                 thread_id: thread_id
             };
             const headers = {
-                'Authorization': 'Bearer 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',
+                'Authorization': 'Bearer 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',
                 'Content-Type': 'application/json; charset=utf-8',
                 'OpenAI-Beta': 'assistants=v1',
             };
@@ -774,7 +826,7 @@
                         headers: headers,
                         dataType: 'json',
                         data: JSON.stringify({
-                            "assistant_id": "asst_Mv2gBBTSeQmHG1mcPWS11bwm"
+                            "assistant_id": "asst_XJdELsXpLgGLPRom0w5H2d4z"
                         }),
                         success: function(result) {
                             // Retrieve run
@@ -789,7 +841,7 @@
                                     headers: headers,
                                     dataType: 'json',
                                     data: {
-                                        "assistant_id": "asst_Mv2gBBTSeQmHG1mcPWS11bwm"
+                                        "assistant_id": "asst_XJdELsXpLgGLPRom0w5H2d4z"
                                     },
                                     success: function(result) {
                                         run_status = result.status;
@@ -852,7 +904,7 @@
                                                 "senderName": system_data.name,
                                                 "senderRoleId": 10,
                                                 "timestamp": new Date(),
-                                                "unread": 0,
+                                                "unread": 1,
                                             };
                                             updateDoc(docRoomByRoomId(room_id), update_room);
                                             bot_ready = true;
@@ -971,6 +1023,8 @@
                             // console.log("Changed from system " + system_data.id + " to " + room.data().participants[1] ?? "null");
                             // system_data.id = room.data().participants[1] ?? null;
                             system_data.id = room.data().participants[1];
+                            lastid = room.data().lastid;
+
                             let doc_admin = doc(fs, 'users_gozic', system_data.id);
                             getDoc(doc_admin).then((doc_admin_data) => {
                                 if (doc_admin_data.exists()) {
@@ -978,6 +1032,13 @@
                                     // console.log(system_data.token);
                                 }
                             })
+
+                            if ($("textarea#message").is(":focus") && lastid == system_data.id) {
+                                const update_room = {
+                                    "unread": 0,
+                                };
+                                updateDoc(docRoomByRoomId(room_id), update_room);
+                            }
 
                             console.log("Changed from thread " + (thread_id ? thread_id : "null") + " to " + ((room.data().threadId && room.data().threadId != "") ? room.data().threadId : "null"));
                             
@@ -991,6 +1052,12 @@
                             } else if (thread_id == null) {
                                 $(".header-title").text("Chat");
                             }
+
+                            if (room.data().lastid == system_data.id && room.data().unread) {
+                                $("#popup-iframe-gozic").addClass("alert-new-message");
+                            } else {
+                                $("#popup-iframe-gozic").removeClass("alert-new-message");
+                            }
                         }
                     })
 
@@ -1000,6 +1067,17 @@
         })
     }
     if (user_data != null) checkUser();
+
+    $(document).ready(function() {
+        $("textarea#message").focus(function() {
+            if (lastid == system_data.id) {
+                const update_room = {
+                    "unread": 0,
+                };
+                updateDoc(docRoomByRoomId(room_id), update_room);
+            }
+        });
+    })
 
     /* 
     *
@@ -1293,13 +1371,13 @@
     // Handle chat toggle
     $(document).ready(function () {
         // Handle click icon popup
-        let showChat = false;
         $("#popup-iframe-gozic").click(function () {
             window.top.postMessage('showChat', '*');
             if (!showChat) {
                 $(".chat-container").animate({
                     scale: 1
                 }, "fast");
+                $("textarea#message").focus();
                 showChat = true;
                 scrollToLastMessage();
             } else {
@@ -1365,17 +1443,15 @@
 
             if (is_valid) {
                 $(this).prop("disabled", true);
-                $.get({
-                    url: BASE_URL + API_PING,
-                    success: function(result) {
-                        let data = JSON.parse(result);
+                getToken(messaging, { vapidKey: system_data.vapid }).then((currentToken) => {
+                    if (currentToken) {
                         user_data = {
                             id: Date.now() + makeid(8),
                             name: $("#customer-info input[name='name']").val(),
                             phone: $("#customer-info input[name='phone']").val(),
                             avatar_url: avatar_list.user,
                             created_at: new Date(),
-                            token: ""
+                            token: currentToken
                         }
                         const doc_user = doc(fs, 'users_gozic', user_data.id.toString());
                         setDoc(doc_user, {
@@ -1385,22 +1461,9 @@
                             token: user_data.token
                         });
 
-                        system_data = {
-                            id: data.admin_id,
-                            name: data.appName,
-                            phone: data.phone_number,
-                            avatar_url: avatar_list.system
-                        }
                         localStorage.setItem("user_data", JSON.stringify(user_data)); // Temporary save user data for getting old messages
                         localStorage.setItem("system_data", JSON.stringify(system_data)); // Temporary save system data for getting old messages
-                        avatar_list = {
-                            "admin": avatar_list.admin,
-                            "system": avatar_list.system,
-                            "user": user_data.avatar_url,
-                        }
-                        // system_data.id = 0;
-                        // thread_id = data.thread_id;
-
+                        
                         room_id = system_data.id + "_" + user_data.id;
                         doc_room = doc(fs, 'chat_rooms_gozic', room_id);
                         setDoc(doc_room, {
@@ -1446,10 +1509,13 @@
                                 $("textarea#message").focus();
                             });
                         })
-                    },
-                    error: function(error) {
-                        $("#customer-info button").text("Error").css({color: "white", backgroundColor: "red"});
+                    } else {
+                        // Show permission request UI
+                        console.log('No registration token available. Request permission to generate one.');
                     }
+                }).catch((err) => {
+                    console.log('An error occurred while retrieving token. ', err);
+                    $("#customer-info button").text("Chưa cấp quyền thông báo").css({color: "white", backgroundColor: "red"});
                 });
             }
         });
